@@ -9,7 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-Github Link: 
+Github Link: https://github.com/myee240/HW-9 
 
 # **Problem 1: Manufacturing flaws in circuit board**
 
