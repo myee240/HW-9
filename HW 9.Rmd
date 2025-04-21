@@ -1,0 +1,211 @@
+---
+title: "HW 9"
+author: "Melissa Yee"
+date: "2025-04-17"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Github Link: 
+
+# **Problem 1: Manufacturing flaws in circuit board**
+
+```{r include=FALSE}
+library(ggplot2)
+library(mosaic)
+library(dplyr)
+library(knitr)        
+library(kableExtra) 
+library(effectsize)
+library(moderndive)
+
+solder <- read.csv("solder.csv")
+```
+
+**Part A**
+
+```{r echo=FALSE}
+ggplot(solder, aes(x = Opening, y = skips)) +
+  geom_boxplot(fill = "skyblue", color = "black") +
+  theme_minimal() +
+  labs(
+    title = "Boxplot of Number of Skips by Size of the Opening",
+    x = "Size of the Opening",
+    y = "Number of Skips"
+  )
+
+```
+
+The boxplot displays the distributions of the number of skips on a circuit board for each size of opening (small, medium, or large) on the solder gun. 
+
+```{r echo=FALSE}
+ggplot(solder, aes(x = Solder, y = skips)) +
+  geom_boxplot(fill = "maroon", color = "black") +
+  theme_minimal() +
+  labs(
+    title = "Histogram of Number of Skips by Type of the Solder Thickness",
+    x = "Number of Skips",
+    y = "Count"
+  )
+```
+
+The boxplot displays the distributions of the number of skips on a circuit board for each type of solder thickness (thick or thin).
+
+**Part B**
+```{r echo=FALSE}
+model_skips = lm(skips ~ Opening + Solder + Opening:Solder, data=solder)
+
+table <- get_regression_table(model_skips, conf.level = 0.95, digits=2)
+
+kable(table, format = "html", digits = 3, caption = "95% Confidence Intervals for Model Coefficients") %>%
+  kable_styling(full_width = FALSE, bootstrap_options = c("striped", "hover", "condensed"))
+```
+**Part C**
+
+The baseline number of skips on a circuit board is 0.39 when all predictors are at their reference levels (Large Opening, Thick Solder). 
+
+The main effect of having a Medium Opening is 2.41 skips. This is the effect of OpeningM in isolation.
+
+The main effect of having a Small Opening is 5.13 skips. This is the effect of OpeningS in isolation.
+
+The main effect of having a Thin Solder is 2.28 skips. This is the effect of SolderThin in isolation. 
+
+The interaction between OpeningM and SolderThin suggests a decrease of 0.74 in the expected number of skips compared to what would be expected from the sum of their individual, isolated effects.
+
+The interaction between OpeningS and SolderThin suggests an increase of 9.65 in the expected number of skips beyond the sum of their individual, isolated effects.
+
+**Part D**
+
+I would recommend to use the large opening size with thick alloy, as this combinations avoids the significant increase in skips. Using medium or small openings increases the number of skips compared to large openings. Likewise, using a thin alloy increases the number of skips compared to a thick alloy. The interaction between Opening M and SolderThin has a negative estimate, but it is not great enough to counteract the sum of their individual isolated effects. Likely, the interaction between OpeningS and SolderThin has a positive estimate, indicating an increase in expected skips. Therefore, using a large opening and thick alloy would minimize the number of skips, 0.39, in the manufacturing process. 
+
+# **Problem 2: Grocery store prices**
+**Part A**
+``` {r echo=FALSE, warning=FALSE}
+groceries <- read.csv("groceries.csv")
+
+avg_price_by_store <- groceries %>%
+  group_by(Store, City) %>%
+  summarize(avg_price = mean(Price, na.rm = TRUE), .groups = "drop") %>%
+  mutate(StoreCity = paste(Store, City))  
+         
+
+ggplot(avg_price_by_store, aes(x = avg_price, y = reorder(StoreCity, avg_price))) +
+  geom_col(fill = "coral1") +
+  labs(
+    title = "Average Product Price by Store",
+    x = "Average Price",
+    y = "Store",
+  ) +
+  theme_minimal()
+
+```
+
+This bar graph displays the average price of all products sold at each store. Store brands with two locations are considered as two seperate stores (ex: HEB Austin differs from HEB Houston)
+
+**Part B**
+``` {r echo=FALSE}
+# PART B
+num_stores_by_product <- groceries %>%
+  group_by(Product) %>%
+  summarize(num_stores = n()) %>%
+  arrange(num_stores)
+
+
+ggplot(num_stores_by_product, aes(x = num_stores, y = reorder(Product, num_stores))) +
+  geom_col(fill = "darkorchid") +
+  labs(
+    title = "Number of Stores by Product",
+    x = "Number of Stores",
+    y = "Product",
+  ) +
+  theme_minimal()
+```
+
+This bar graph displays the number of stores that sell each product in the data set.
+
+**Part C**
+``` {r echo=FALSE, message=FALSE, results='hide'}
+# PART C 
+model_1 = lm(Price ~ Product + Type, data = groceries)
+coef(model_1)
+confint(model_1)
+summary(model_1)
+```
+
+Estimate = -0.66426
+
+Std. Error = 0.12765
+
+95% Confidence Interval = -0.66426 +- 1.96 * 0.12765 
+
+(0.41, 0.92)
+
+Compared with ordinary grocery stores (like Albertsons, HEB, or Krogers), convenience stores charge somewhere between $0.41 and $0.92 more for the same product.
+
+**Part D**
+``` {r echo=FALSE, message=FALSE, results='hide'}
+# PART D
+model_2 = lm(Price ~ Product + Store, data = groceries)
+summary(model_2)
+
+```
+
+Stores with lowest prices: 
+
+Kroger Fresh Fare and Walmart charge the lowest prices when comparing the same product. Kroger Fresh Fare charges about $0.90 less than Albertsons for the same product. Walmart charges about $0.99 less than Ablertons for the same product. 
+
+Stores with the highest prices: 
+
+Wheatsville Food Co-Op and Whole Foods charge the highest prices when comparing the same product. Wheatsville Food Co-Op charges about $0.29 more than Albertons for the same product. Whole Foods charges $0.36 more than Albertons for the same product. 
+
+**Part E**
+
+Central Market charges a similar amount to HEB for the same product. 
+
+Regression coefficients: 
+
+  Central Market: -0.57339 
+  
+  HEB: -0.64596
+  
+Walmart vs HEB: 
+  -0.99255 - (-0.64596) = −0.34659 -> Walmart charges, on average, $0.35 less than HEB
+
+Whole Foods vs HEB: 
+  0.36416 - (-0.64596) = 1.01012 -> Whole Foods charges, on average $1.01 more than HEB
+  
+Wheatsville Food Co-op vs HEB: 
+  0.29029 - (-0.64596) = 0.93625 -> Wheatsville charges, on average, $0.94 more than HEB
+
+Therefore, a $0.07 difference between Central Market and HEB is small compares to differences among other stores. 
+
+**Part F**
+``` {r echo=FALSE, message=FALSE, results='hide'}
+#PART F
+groceries <- groceries %>%
+  mutate(Income10K = floor(Income / 10000))
+
+model_3 <- lm(Price ~ Product + Income10K, data=groceries)
+coef(model_3)
+confint(model_3)
+
+standardize_parameters(model_3)
+```
+Based on the sign of the Income10K coefficient, consumers in poorer ZIP codes pay more for the same product. On average, as income increases, the price of groceries decreases. This indicates that poorer communities are paying more for groceries those than of more income. 
+
+A one-standard deviation increase in the income of a ZIP code seems to be associated with a -0.03 standard-deviation change in the price that consumers in that ZIP code expect to pay for the same product.
+
+# **Problem 3: Redlining**
+
+A. True, according to Figure A1, ZIP codes with a higher percentage of minority residents tend to have more FAIR policies per 100 housing units. The coefficient for minority is 0.14, which means each 1% increase in minority residents is associated with an increase of 0.014 FAIR policies per 100 housing units.The 95% confidence interval does not include 0, thus it is statistically significant. 
+ 
+B. This statement is undecidable because there is no linear model to compare the slopes of minority percentage and age of housing stock between different ZIP codes with FAIR policies. Looking at this graph, a diagnosis of an interaction could happen if the slopes were visually different.  
+
+C. False, since the slopes between minority percentage and number of FAIR policies per 100 housing units are similar. Minority percentage and FAIR policies relationship is nearly the same across fire risk groups.
+
+D. False, when the income is added to the linear model, the coefficient of the minority variable only changed from 0.14 to 0.1. Therefore, the effect of income does not diminish the effect of minority percentage on FAIR policy uptake. It suggests that income does not fully account for the association between minority percentage and FAIR policy uptake; there are other factors contributing to this relationship. 
+
+E. True, the model has a R-squared value of 0.66, which means the 66% of the variation can be explained by the factors of the model. This means that the other unexplained 34% can be due to  to variation in ZIP code level. The coefficient of minority after adjusting for other factors is 0.008, indicating a positive association. Furthermore, the 95% confidence interval does not contain 0, thus this association is statistically significant. 
